@@ -1,0 +1,52 @@
+name: CI Pipeline
+
+# 1. 設定在 push 時自動執行
+on:
+  push:
+    branches: [ "main", "master" ] # 或者是任何你目前開發的分支
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 步驟一：複製 GitHub 儲存庫的程式碼到 Runner 上
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 步驟二：設定 Node.js 環境
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-with: '20' # 根據專案需求選擇 Node 版本
+        cache: 'npm'    # 自動快取 dependency，加快 pipeline 速度
+
+    # 步驟三：安裝專案依賴套件
+    - name: Install dependencies
+      run: npm ci
+
+    # 步驟四：TypeScript Typecheck (20%)
+    - name: TypeScript typecheck
+      run: npm run typecheck # 請確認 package.json 中有此指令，或使用 npx tsc --noEmit
+
+    # 步驟五：Prettier Check (20%)
+    - name: Prettier check
+      run: npm run format:check # 或 npx prettier --check .
+
+    # 步驟六：執行測試並產生報告 (20%)
+    # 這裡以 Jest 為例，加上 --watchAll=false 確保在 CI 環境中只執行一次就結束
+    - name: Run Tests
+      run: npm run test -- --watchAll=false
+
+    # 步驟七：將測試結果顯示於 GitHub Actions 結果頁面 (20%)
+    # 使用現成的 Action 來解析測試報告（例如 Jest 的 JUnit 格式或 CTR 報告）
+    # 注意：需確保測試指令會輸出報告檔案（如 junit.xml）
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: success() || failure() # 確保測試失敗時也能上傳報告
+      with:
+        name: TypeScript Tests Result
+        path: junit.xml # 測試報告的路徑，需與專案測試設定一致
+        reporter: jest-junit
