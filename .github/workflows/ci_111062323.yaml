@@ -29,7 +29,7 @@ jobs:
 
     # 2. Prettier check (20%)
     - name: Prettier check
-      run: npx prettier --check .
+      run: npx prettier --check src
 
     # 3. Test & 顯示於結果頁面 (40% - 包含測試與顯示結果)
     # 這裡直接執行 jest，畫面的 Log 就會是完美的測試結果報告
